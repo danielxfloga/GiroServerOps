@@ -1,0 +1,186 @@
+﻿<UserControl x:Class="GiroServerOps.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GiroServerOps">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="CardMatte" Color="#3B3B3B"/>
+        <SolidColorBrush x:Key="BgMatte" Color="#1A1A1A"/>
+        <SolidColorBrush x:Key="BorderMatte" Color="#1A1A1A"/>
+        <SolidColorBrush x:Key="TextMain" Color="#E8EAF0"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#9AA0AE"/>
+
+        <SolidColorBrush x:Key="OkAccent" Color="#2EE59D"/>
+        <SolidColorBrush x:Key="WarnAccent" Color="#FF9F1C"/>
+        <SolidColorBrush x:Key="CritAccent" Color="#FF6B6B"/>
+
+        <local:StatusToAccentBrushConverter x:Key="StatusToAccentBrushConverter"
+                                            OkBrush="{StaticResource OkAccent}"
+                                            WarningBrush="{StaticResource WarnAccent}"
+                                            CriticalBrush="{StaticResource CritAccent}"/>
+
+        <Style x:Key="KpiCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardMatte}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderMatte}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="MinWidth" Value="258"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="22" ShadowDepth="8" Opacity="0.35" Color="#000000"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="KpiTemplate">
+            <Border Style="{StaticResource KpiCardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="{Binding Title}"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,0,10,0"/>
+
+                        <Border x:Name="StatusBadge"
+                                Grid.Column="1"
+                                Width="28" Height="28"
+                                CornerRadius="9"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource OkAccent}"
+                                Background="#182EE59D"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                SnapsToDevicePixels="False">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#2EE59D" BlurRadius="18" ShadowDepth="0" Opacity="0.90"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Path x:Name="StatusIcon"
+                                      StrokeThickness="2"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,7,7"
+                                      Stroke="{StaticResource OkAccent}"
+                                      Data="M7.5,14 L11,17.5 L18.5,9.5"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Value}"
+                               Foreground="{StaticResource TextMain}"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Margin="0,12,0,0"/>
+
+                    <Border Grid.Row="2"
+                            Height="2"
+                            Margin="0,12,0,6"
+                            CornerRadius="2"
+                            Background="{Binding Status, Converter={StaticResource StatusToAccentBrushConverter}}"
+                            Opacity="0.95"/>
+
+                    <TextBlock Grid.Row="3"
+                               Text="{Binding Delta}"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="12.5"
+                               TextWrapping="Wrap"/>
+                </Grid>
+            </Border>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Ok">
+                    <Setter TargetName="StatusBadge" Property="BorderBrush" Value="{StaticResource OkAccent}"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#182EE59D"/>
+                    <Setter TargetName="StatusBadge" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#2EE59D" BlurRadius="18" ShadowDepth="0" Opacity="0.90"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter TargetName="StatusIcon" Property="Stroke" Value="{StaticResource OkAccent}"/>
+                    <Setter TargetName="StatusIcon" Property="Data" Value="M7.5,14 L11,17.5 L18.5,9.5"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Warning">
+                    <Setter TargetName="StatusBadge" Property="BorderBrush" Value="{StaticResource WarnAccent}"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#18FF9F1C"/>
+                    <Setter TargetName="StatusBadge" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#FF9F1C" BlurRadius="18" ShadowDepth="0" Opacity="0.90"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter TargetName="StatusIcon" Property="Stroke" Value="{StaticResource WarnAccent}"/>
+                    <Setter TargetName="StatusIcon" Property="Data" Value="M12,6.5 V13.2 M12,16.8 H12.01"/>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Status}" Value="Critical">
+                    <Setter TargetName="StatusBadge" Property="BorderBrush" Value="{StaticResource CritAccent}"/>
+                    <Setter TargetName="StatusBadge" Property="Background" Value="#18FF6B6B"/>
+                    <Setter TargetName="StatusBadge" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#FF6B6B" BlurRadius="18" ShadowDepth="0" Opacity="0.90"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter TargetName="StatusIcon" Property="Stroke" Value="{StaticResource CritAccent}"/>
+                    <Setter TargetName="StatusIcon" Property="Data" Value="M8,8 L16,16 M16,8 L8,16"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource BgMatte}" Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="2,2,0,16">
+            <TextBlock Text="Dashboard"
+                       Foreground="{StaticResource TextMain}"
+                       FontSize="18"
+                       FontWeight="SemiBold"/>
+            <TextBlock Text=""
+                       Foreground="{StaticResource TextMuted}"
+                       FontSize="12.5"
+                       Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1"
+                      Padding="10"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Cards}" ItemTemplate="{StaticResource KpiTemplate}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" ItemWidth="Auto" ItemHeight="156"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Margin" Value="0,0,18,18"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
