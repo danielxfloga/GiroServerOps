@@ -292,7 +292,7 @@
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="12,0,0,0">
-                    
+
                     <Button x:Name="btnClose"
                             Style="{StaticResource MacCircleButton}"
                             Background="#FF5F57"
@@ -309,8 +309,8 @@
                             BorderBrush="#0D5A1A"
                             Click="btnMax_Click"/>
                 </StackPanel>
-                
-                
+
+
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
@@ -320,7 +320,7 @@
                     <TextBlock Foreground="{StaticResource TextMain}"
                                FontSize="13"
                                FontWeight="SemiBold">
-                        <Run Text="Giro"/>
+                        <Run Text="NetCo"/>
                         <Run Language="es-mx" Text=" Admin"/>
                     </TextBlock>
 
@@ -365,18 +365,18 @@
                         Height="1"
                         Background="{StaticResource BorderMatte}"
                         Opacity="0.85"/>
-                
-                 
+
+
             </Grid>
 
             <Grid Grid.Row="1" Margin="25">
-                
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <!--
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!--
 
                         <StackPanel>
                             <TextBlock Text="Panel principal"
@@ -390,17 +390,17 @@
                         </StackPanel>
                         -->
 
-                        <Border Grid.Row="1"
+                    <Border Grid.Row="1"
                             Margin="0,18,0,0"
                             Background="#1A1A1A"
                             BorderBrush="{StaticResource BorderMatte}"
                             BorderThickness="1"
                             CornerRadius="14"
                             Padding="14">
-                            <local:DashboardView/>
-                        </Border>
+                        <ContentControl x:Name="MainContentHost"/>
+                    </Border>
 
-                    </Grid>
+                </Grid>
             </Grid>
 
             <Border x:Name="Overlay"
@@ -447,7 +447,7 @@
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="12,14,12,18">
 
-                            <Button Style="{StaticResource MenuButtonStyle}" Tag="#4DA3FF" Click="MenuItem_Click">
+                            <Button x:Name="btnMenuDatabase" Style="{StaticResource MenuButtonStyle}" Tag="#4DA3FF" Click="MenuItem_Click">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="40"/>
@@ -504,7 +504,7 @@
                                         <TextBlock Text=".bak, retención, verificación" Foreground="{StaticResource TextMuted}" FontSize="12"/>
                                     </StackPanel>
 
-                                   
+
                                 </Grid>
                             </Button>
 
@@ -580,7 +580,7 @@
                                 </Grid>
                             </Button>
 
-                            <Button Style="{StaticResource MenuButtonStyle}" Tag="#FF9F1C" Margin="0,12,0,0" Click="MenuItem_Click">
+                            <Button x:Name="btnMenuMonitoring" Style="{StaticResource MenuButtonStyle}" Tag="#FF9F1C" Margin="0,12,0,0" Click="MenuItem_Click">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="40"/>

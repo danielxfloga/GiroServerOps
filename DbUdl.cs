@@ -38,19 +38,24 @@ namespace GiroServerOps
             return true;
         }
 
-        public static bool TestConnection(string connectionString)
+        public static bool TestConnection(string oleDbConnectionString)
         {
             try
             {
-                using (var cn = new OleDbConnection(connectionString))
+                
+
+                var sqlConnectionString = ToSqlClientConnectionString(oleDbConnectionString);
+
+                using (var cn = new Microsoft.Data.SqlClient.SqlConnection(sqlConnectionString))
                 {
-                    cn.Open();
+                    cn.Open(); 
                     cn.Close();
                 }
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error conexión: {ex.Message}");
                 return false;
             }
         }

@@ -77,3 +77,4 @@ C:\OneDrive\Documentos\Development\C#\GiroServerOps\bin\Debug\net10.0-windows\ru
 C:\OneDrive\Documentos\Development\C#\GiroServerOps\bin\Debug\net10.0-windows\System.Management.dll
 C:\OneDrive\Documentos\Development\C#\GiroServerOps\bin\Debug\net10.0-windows\runtimes\win\lib\net10.0\System.Management.dll
 C:\OneDrive\Documentos\Development\C#\GiroServerOps\obj\Debug\net10.0-windows\GiroServerOps_Content.g.cs
+C:\OneDrive\Documentos\Development\C#\GiroServerOps\obj\Debug\net10.0-windows\GiroServerOps.sourcelink.json

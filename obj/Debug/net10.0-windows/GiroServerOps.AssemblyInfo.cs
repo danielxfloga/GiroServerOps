@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GiroServerOps")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7a3c1f7ec8d0281ed5257e659b2c464e5117c3a4")]
 [assembly: System.Reflection.AssemblyProductAttribute("GiroServerOps")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GiroServerOps")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

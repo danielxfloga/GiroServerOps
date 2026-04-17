@@ -19,6 +19,12 @@ namespace GiroServerOps
         {
             InitializeComponent();
             StateChanged += MainWindow_StateChanged;
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            ShowDashboardView();
         }
 
         private void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -66,7 +72,22 @@ namespace GiroServerOps
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
+            if (sender == btnMenuDatabase)
+                ShowDatabaseQueryView();
+            else if (sender == btnMenuMonitoring)
+                ShowDashboardView();
+
             CloseMenuAndToggle();
+        }
+
+        private void ShowDashboardView()
+        {
+            MainContentHost.Content = new DashboardView();
+        }
+
+        private void ShowDatabaseQueryView()
+        {
+            MainContentHost.Content = new QuerySqlView();
         }
 
         private void CloseMenuAndToggle()
