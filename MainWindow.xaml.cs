@@ -2,8 +2,12 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
     public enum KpiStatus
     {
@@ -14,17 +18,23 @@ namespace GiroServerOps
     public partial class MainWindow : Window
     {
         private bool _isClosing;
+        private int _contentLoadVersion;
 
         public MainWindow()
         {
             InitializeComponent();
             StateChanged += MainWindow_StateChanged;
             Loaded += MainWindow_Loaded;
+            Closed += MainWindow_Closed;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            ShowDashboardView();
+            Loaded -= MainWindow_Loaded;
+
+            ShowStartupOverlay("Cargando monitoreo...");
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+            await ShowDashboardViewAsync();
         }
 
         private void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -49,8 +59,25 @@ namespace GiroServerOps
 
         private void TopBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+
+            var source = e.OriginalSource as DependencyObject;
+            if (!IsInteractiveTopBarElement(source))
                 DragMove();
+        }
+
+        private static bool IsInteractiveTopBarElement(DependencyObject? source)
+        {
+            while (source != null)
+            {
+                if (source is ButtonBase || source is TextBox)
+                    return true;
+
+                source = LogicalTreeHelper.GetParent(source) ?? System.Windows.Media.VisualTreeHelper.GetParent(source);
+            }
+
+            return false;
         }
 
         private void btnHamburger_Click(object sender, RoutedEventArgs e)
@@ -70,24 +97,74 @@ namespace GiroServerOps
                 CloseMenuAndToggle();
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        private async void MenuItem_Click(object sender, RoutedEventArgs e)
         {
+            CloseMenuAndToggle();
+
             if (sender == btnMenuDatabase)
                 ShowDatabaseQueryView();
             else if (sender == btnMenuMonitoring)
-                ShowDashboardView();
-
-            CloseMenuAndToggle();
+                await ShowDashboardViewAsync();
         }
 
-        private void ShowDashboardView()
+        private async Task ShowDashboardViewAsync()
         {
-            MainContentHost.Content = new DashboardView();
+            var loadVersion = ++_contentLoadVersion;
+
+            ShowStartupOverlay("Cargando monitoreo...");
+            DisposeHostedContent();
+
+            try
+            {
+                var dashboardView = new DashboardView();
+                MainContentHost.Content = dashboardView;
+
+                await dashboardView.InitializeAsync();
+            }
+            finally
+            {
+                if (loadVersion == _contentLoadVersion)
+                    HideStartupOverlay();
+            }
         }
 
         private void ShowDatabaseQueryView()
         {
+            _contentLoadVersion++;
+            DisposeHostedContent();
             MainContentHost.Content = new QuerySqlView();
+            HideStartupOverlay();
+        }
+
+        private void DisposeHostedContent()
+        {
+            if (MainContentHost.Content is IDisposable disposable)
+                disposable.Dispose();
+
+            MainContentHost.Content = null;
+        }
+
+        private void ShowStartupOverlay(string status)
+        {
+            txtStartupStatus.Text = status;
+            if (imgStartupLogo.Source == null)
+                imgStartupLogo.Source = AppMemoryCoordinator.CreateTransientStartupLogo();
+            StartupOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void HideStartupOverlay()
+        {
+            StartupOverlay.Visibility = Visibility.Collapsed;
+            AppMemoryCoordinator.ScheduleIdleTrim(() =>
+            {
+                imgStartupLogo.Source = null;
+            });
+        }
+
+        private void MainWindow_Closed(object? sender, EventArgs e)
+        {
+            DisposeHostedContent();
+            imgStartupLogo.Source = null;
         }
 
         private void CloseMenuAndToggle()

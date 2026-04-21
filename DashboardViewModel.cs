@@ -6,13 +6,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
-    public class DashboardViewModel
+    public class DashboardViewModel : IDisposable
     {
         public ObservableCollection<KpiCard> Cards { get; } = new ObservableCollection<KpiCard>();
 
@@ -33,9 +34,10 @@ namespace GiroServerOps
         private readonly Dictionary<string, PerformanceCounter> _diskWriteCounters = new Dictionary<string, PerformanceCounter>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PerformanceCounter> _diskBusyCounters = new Dictionary<string, PerformanceCounter>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SqlDriveIoSnapshot> _prevSqlDriveIo = new Dictionary<string, SqlDriveIoSnapshot>(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> _knownLogicalDisks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private bool _updating;
+        private bool _disposed;
+        private Task? _initializeTask;
 
         public DashboardViewModel(string sqlConnectionString)
         {
@@ -46,12 +48,68 @@ namespace GiroServerOps
             AddCard("LOG/DB", "inicializando…", "—", KpiStatus.Ok);
             AddCard("Conexiones", "inicializando…", "—", KpiStatus.Ok);
 
-            TryInitCounters();
-            TryInitDiskIoCounters();
-
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-            _timer.Tick += async (_, __) => await UpdateAsync();
-            _timer.Start();
+            _timer.Tick += Timer_Tick;
+        }
+
+        public Task InitializeAsync()
+        {
+            if (_initializeTask == null)
+                _initializeTask = InitializeCoreAsync();
+
+            return _initializeTask;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _timer.Stop();
+            _timer.Tick -= Timer_Tick;
+
+            DisposeCounter(ref _cpuHost);
+            DisposeCounter(ref _cpuSql);
+            DisposeCounters(_diskReadCounters);
+            DisposeCounters(_diskWriteCounters);
+            DisposeCounters(_diskBusyCounters);
+
+            _prevSqlDriveIo.Clear();
+            _map.Clear();
+            _prev.Clear();
+            Cards.Clear();
+        }
+
+        private async Task InitializeCoreAsync()
+        {
+            if (_disposed)
+                return;
+
+            await Task.Run(() =>
+            {
+                TryInitCounters();
+                TryInitDiskIoCounters();
+            }).ConfigureAwait(false);
+
+            if (_disposed)
+                return;
+
+            await UpdateAsync().ConfigureAwait(false);
+
+            if (_disposed)
+                return;
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                if (!_disposed)
+                    _timer.Start();
+            });
+        }
+
+        private async void Timer_Tick(object? sender, EventArgs e)
+        {
+            await UpdateAsync();
         }
 
         private void AddCard(string title, string value, string delta, KpiStatus status)
@@ -224,29 +282,16 @@ namespace GiroServerOps
 
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem"))
-                using (var results = searcher.Get())
-                {
-                    var mo = results.Cast<ManagementObject>().FirstOrDefault();
-                    if (mo == null) return false;
+                var status = new MemoryStatusEx();
+                if (!GlobalMemoryStatusEx(status) || status.TotalPhysical == 0)
+                    return false;
 
-                    var totalKbObj = mo["TotalVisibleMemorySize"];
-                    var freeKbObj = mo["FreePhysicalMemory"];
+                availMb = status.AvailablePhysical / 1024.0 / 1024.0;
 
-                    if (totalKbObj == null || freeKbObj == null) return false;
+                var used = (status.TotalPhysical - status.AvailablePhysical) / (double)status.TotalPhysical;
+                usedPct = Clamp(used * 100.0, 0, 100);
 
-                    var totalKb = Convert.ToDouble(totalKbObj, CultureInfo.InvariantCulture);
-                    var freeKb = Convert.ToDouble(freeKbObj, CultureInfo.InvariantCulture);
-
-                    if (totalKb <= 0) return false;
-
-                    availMb = freeKb / 1024.0;
-
-                    var used = (totalKb - freeKb) / totalKb;
-                    usedPct = Clamp(used * 100.0, 0, 100);
-
-                    return true;
-                }
+                return true;
             }
             catch
             {
@@ -298,13 +343,11 @@ namespace GiroServerOps
 
         private async Task UpdateAsync()
         {
-            if (_updating) return;
+            if (_disposed || _updating) return;
             _updating = true;
 
             try
             {
-                TryInitDiskIoCounters();
-
                 var cpuHost = ReadCounter(_cpuHost);
                 var cpuFree = double.IsNaN(cpuHost) ? double.NaN : Math.Max(0, 100.0 - Clamp(cpuHost, 0, 100));
 
@@ -317,8 +360,14 @@ namespace GiroServerOps
                 var conn = await TryReadSqlConnectionsAsync();
                 var diskIo = await TryReadDiskIoAsync();
 
+                if (_disposed)
+                    return;
+
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
+                    if (_disposed)
+                        return;
+
                     EnsureDiskCards(diskIo);
 
                     UpdateCpu(cpuSql, cpuHost, cpuFree);
@@ -463,7 +512,6 @@ namespace GiroServerOps
                 foreach (var drive in logicalDrives)
                 {
                     EnsureDiskCounters(drive);
-                    _knownLogicalDisks.Add(drive);
                 }
 
                 var sqlIoByDrive = await TryReadSqlDriveIoPerSecondAsync();
@@ -758,6 +806,39 @@ namespace GiroServerOps
             return v;
         }
 
+        private static void DisposeCounters(Dictionary<string, PerformanceCounter> counters)
+        {
+            foreach (var counter in counters.Values)
+            {
+                try
+                {
+                    counter.Dispose();
+                }
+                catch
+                {
+                }
+            }
+
+            counters.Clear();
+        }
+
+        private static void DisposeCounter(ref PerformanceCounter? counter)
+        {
+            try
+            {
+                counter?.Dispose();
+            }
+            catch
+            {
+            }
+
+            counter = null;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GlobalMemoryStatusEx([In, Out] MemoryStatusEx buffer);
+
         private sealed class SqlDriveIoSnapshot
         {
             public DateTime AtUtc { get; set; }
@@ -781,6 +862,20 @@ namespace GiroServerOps
             public double SqlReadBytesPerSec { get; set; }
             public double SqlWriteBytesPerSec { get; set; }
             public double SqlSharePct { get; set; }
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private sealed class MemoryStatusEx
+        {
+            public uint Length = (uint)Marshal.SizeOf<MemoryStatusEx>();
+            public uint MemoryLoad;
+            public ulong TotalPhysical;
+            public ulong AvailablePhysical;
+            public ulong TotalPageFile;
+            public ulong AvailablePageFile;
+            public ulong TotalVirtual;
+            public ulong AvailableVirtual;
+            public ulong AvailableExtendedVirtual;
         }
     }
 }

@@ -1,13 +1,18 @@
 ﻿using System.Windows.Controls;
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
-    public partial class DashboardView : UserControl
+    public partial class DashboardView : UserControl, IDisposable
     {
+        private readonly DashboardViewModel _viewModel;
+        private bool _disposed;
+
         public DashboardView()
         {
             InitializeComponent();
@@ -16,7 +21,29 @@ namespace GiroServerOps
             if (!DbUdl.TryEnsureValidUdl(out cs))
                 cs = "";
 
-            DataContext = new DashboardViewModel(cs);
+            _viewModel = new DashboardViewModel(cs);
+            DataContext = _viewModel;
+            Unloaded += DashboardView_Unloaded;
+        }
+
+        public Task InitializeAsync()
+        {
+            return _viewModel.InitializeAsync();
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            Unloaded -= DashboardView_Unloaded;
+            _viewModel.Dispose();
+        }
+
+        private void DashboardView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Dispose();
         }
     }
     public class StatusToAccentBrushConverter : IValueConverter

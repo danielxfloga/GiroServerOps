@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
     public partial class DbConfigWindow : Window
     {

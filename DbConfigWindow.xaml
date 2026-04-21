@@ -1,4 +1,4 @@
-﻿<Window x:Class="GiroServerOps.DbConfigWindow"
+<Window x:Class="NetcoServerConsole.DbConfigWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Configuración de conexión"
@@ -6,8 +6,8 @@
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         ResizeMode="NoResize"
-        AllowsTransparency="True"
-        Background="Transparent">
+        AllowsTransparency="False"
+        Background="#121212">
 
     <Window.Resources>
         <SolidColorBrush x:Key="BgMatte" Color="#121212"/>
@@ -96,7 +96,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <TextBlock Text="Giro Admin • Conexión"
+                    <TextBlock Text="NetCo Admin • Conexión"
                                Foreground="{StaticResource TextMain}"
                                FontSize="13"
                                FontWeight="SemiBold"/>

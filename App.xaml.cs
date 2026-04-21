@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
     public partial class App : Application
     {

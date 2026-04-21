@@ -4,12 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
     public static class DbUdl
     {
-        public static string UdlFileName => "GiroServerOps.udl";
-        public static string UdlPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UdlFileName);
+        public static string UdlFileName => "NetcoServerConsole.udl";
+        public static string LegacyUdlFileName => "GiroServerOps.udl";
+        public static string UdlPath => ResolveUdlPath();
+        private static string PreferredUdlPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UdlFileName);
 
         public static bool TryEnsureValidUdl(out string connectionString)
         {
@@ -34,7 +36,7 @@ namespace GiroServerOps
             if (!TestConnection(connectionString))
                 return false;
 
-            WriteUdl(UdlPath, connectionString);
+            WriteUdl(PreferredUdlPath, connectionString);
             return true;
         }
 
@@ -109,6 +111,19 @@ namespace GiroServerOps
             {
                 return false;
             }
+        }
+
+        private static string ResolveUdlPath()
+        {
+            var preferred = PreferredUdlPath;
+            if (File.Exists(preferred))
+                return preferred;
+
+            var legacy = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, LegacyUdlFileName);
+            if (File.Exists(legacy))
+                return legacy;
+
+            return preferred;
         }
 
         public static string ToSqlClientConnectionString(string oleDbConnectionString)

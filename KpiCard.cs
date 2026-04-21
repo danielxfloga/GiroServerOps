@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace GiroServerOps
+namespace NetcoServerConsole
 {
     public class KpiCard : INotifyPropertyChanged
     {
