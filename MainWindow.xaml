@@ -347,7 +347,7 @@
             CornerRadius="10"
             Padding="10">
                         <Image Width="40" Height="40"
-               Source="giroservops_logo.ico"/>
+               Source="/netco_logo.png"/>
                     </Border>
 
                     <ToggleButton x:Name="btnHamburger"
